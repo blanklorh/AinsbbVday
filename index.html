@@ -8,11 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   height: 100vh;
@@ -74,16 +70,19 @@ button:active {
   transform: translateY(4px);
 }
 
+/* Initial button positions separated ~1 cm */
 #yesBtn {
   background-color: #ff69b4;
-  left: 35%;
-  top: 60%;
+  left: 50%;
+  top: 50%;
+  transform: translate(-60%, -50%);
 }
 
 #noBtn {
   background-color: #40e0d0;
-  left: 55%;
-  top: 60%;
+  left: 50%;
+  top: 50%;
+  transform: translate(40%, -50%);
 }
 
 .win-message {
@@ -128,7 +127,6 @@ canvas {
   transition: transform 0.4s ease;
 }
 
-/* Active popup */
 #popupOverlay.active {
   opacity: 1;
   pointer-events: all;
@@ -177,38 +175,45 @@ const popup = document.getElementById("popupOverlay");
 
 let yesScale = 1;
 
-/* Move NO button infinitely, scale YES */
+// Approximate 1 cm in pixels
+const CM = 37.8;
+
+// NO button movement area: width 4 cm, height 6 cm
+const NO_AREA_WIDTH = 4 * CM;
+const NO_AREA_HEIGHT = 6 * CM;
+
 function moveButton(e) {
   e.preventDefault();
 
-  const padding = 20;
-  const maxX = window.innerWidth - noBtn.offsetWidth - padding;
-  const maxY = window.innerHeight - noBtn.offsetHeight - padding;
+  // Center origin
+  const centerX = window.innerWidth / 2;
+  const centerY = window.innerHeight / 2;
 
-  const randomX = Math.max(padding, Math.random() * maxX);
-  const randomY = Math.max(padding, Math.random() * maxY);
+  // Random position within area
+  const randomX = centerX - NO_AREA_WIDTH/2 + Math.random() * NO_AREA_WIDTH;
+  const randomY = centerY - NO_AREA_HEIGHT/2 + Math.random() * NO_AREA_HEIGHT;
 
   noBtn.style.left = randomX + "px";
   noBtn.style.top = randomY + "px";
 
+  // YES button grows
   yesScale += 0.12;
-  yesBtn.style.transform = `scale(${yesScale})`;
+  yesBtn.style.transform = `translate(-60%, -50%) scale(${yesScale})`;
 }
 
 noBtn.addEventListener("pointerdown", moveButton);
 
-/* YES button win */
+// YES button click
 yesBtn.addEventListener("pointerdown", () => {
   coinSound.play();
   winMessage.style.display = "block";
   startFireworks();
   noBtn.style.display = "none";
 
-  // Show popout image
   popup.classList.add("active");
 });
 
-/* Fireworks animation */
+// FIREWORKS
 const canvas = document.getElementById("fireworks");
 const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
@@ -216,14 +221,14 @@ canvas.height = window.innerHeight;
 let particles = [];
 
 function startFireworks() {
-  for (let i = 0; i < 100; i++) {
+  for (let i=0; i<100; i++) {
     particles.push({
-      x: canvas.width / 2,
-      y: canvas.height / 2,
+      x: canvas.width/2,
+      y: canvas.height/2,
       radius: 2,
-      color: `hsl(${Math.random() * 360}, 100%, 60%)`,
-      speedX: (Math.random() - 0.5) * 10,
-      speedY: (Math.random() - 0.5) * 10,
+      color: `hsl(${Math.random()*360}, 100%, 60%)`,
+      speedX: (Math.random()-0.5)*10,
+      speedY: (Math.random()-0.5)*10,
       life: 100
     });
   }
@@ -231,24 +236,18 @@ function startFireworks() {
 }
 
 function animateFireworks() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  particles.forEach((p, index) => {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach((p, i)=>{
     p.x += p.speedX;
     p.y += p.speedY;
     p.life--;
-
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+    ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
     ctx.fillStyle = p.color;
     ctx.fill();
-
-    if (p.life <= 0) particles.splice(index, 1);
+    if(p.life <= 0) particles.splice(i,1);
   });
-
-  if (particles.length > 0) {
-    requestAnimationFrame(animateFireworks);
-  }
+  if(particles.length > 0) requestAnimationFrame(animateFireworks);
 }
 </script>
 
