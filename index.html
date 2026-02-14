@@ -70,19 +70,19 @@ button:active {
   transform: translateY(4px);
 }
 
-/* Initial button positions separated ~1 cm */
+/* Initial button positions ~3/4 down page */
 #yesBtn {
   background-color: #ff69b4;
-  left: 50%;
-  top: 50%;
-  transform: translate(-60%, -50%);
+  left: 40%;
+  top: 75%;
+  transform: translate(-50%, -50%);
 }
 
 #noBtn {
   background-color: #40e0d0;
-  left: 50%;
-  top: 50%;
-  transform: translate(40%, -50%);
+  left: 60%;
+  top: 75%;
+  transform: translate(-50%, -50%);
 }
 
 .win-message {
@@ -114,7 +114,7 @@ canvas {
   align-items: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.5s ease;
   z-index: 5;
 }
 
@@ -122,18 +122,22 @@ canvas {
   max-width: 85%;
   max-height: 85%;
   border-radius: 20px;
-  box-shadow: 0 0 40px hotpink;
+  border: 6px solid #FFC0CB; /* pastel pink border */
+  box-shadow: 0 0 50px hotpink;
   transform: scale(0);
-  transition: transform 0.4s ease;
+  animation: popout 0.8s forwards;
+}
+
+/* Popout keyframes with dramatic bounce */
+@keyframes popout {
+  0% { transform: scale(0); }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 #popupOverlay.active {
   opacity: 1;
   pointer-events: all;
-}
-
-#popupOverlay.active img {
-  transform: scale(1);
 }
 </style>
 </head>
@@ -174,31 +178,34 @@ const coinSound = document.getElementById("coinSound");
 const popup = document.getElementById("popupOverlay");
 
 let yesScale = 1;
+let noScale = 1;
 
-// Approximate 1 cm in pixels
-const CM = 37.8;
-
-// NO button movement area: width 4 cm, height 6 cm
-const NO_AREA_WIDTH = 4 * CM;
-const NO_AREA_HEIGHT = 6 * CM;
-
+// NO button small random movements + shrink on tap
 function moveButton(e) {
   e.preventDefault();
 
-  // Center origin
-  const centerX = window.innerWidth / 2;
-  const centerY = window.innerHeight / 2;
+  const maxMove = 20;
+  const rect = noBtn.getBoundingClientRect();
+  const currentX = rect.left;
+  const currentY = rect.top;
 
-  // Random position within area
-  const randomX = centerX - NO_AREA_WIDTH/2 + Math.random() * NO_AREA_WIDTH;
-  const randomY = centerY - NO_AREA_HEIGHT/2 + Math.random() * NO_AREA_HEIGHT;
+  let randomX = currentX + (Math.random() - 0.5) * maxMove;
+  let randomY = currentY + (Math.random() - 0.5) * maxMove;
+
+  // clamp to viewport
+  randomX = Math.max(0, Math.min(window.innerWidth - rect.width, randomX));
+  randomY = Math.max(0, Math.min(window.innerHeight - rect.height, randomY));
 
   noBtn.style.left = randomX + "px";
   noBtn.style.top = randomY + "px";
 
+  // shrink NO button
+  noScale = Math.max(0.2, noScale - 0.05);
+  noBtn.style.transform = `translate(-50%, -50%) scale(${noScale})`;
+
   // YES button grows
   yesScale += 0.12;
-  yesBtn.style.transform = `translate(-60%, -50%) scale(${yesScale})`;
+  yesBtn.style.transform = `translate(-50%, -50%) scale(${yesScale})`;
 }
 
 noBtn.addEventListener("pointerdown", moveButton);
@@ -210,7 +217,13 @@ yesBtn.addEventListener("pointerdown", () => {
   startFireworks();
   noBtn.style.display = "none";
 
+  // show dramatic popout
   popup.classList.add("active");
+  // reset animation
+  const img = popup.querySelector("img");
+  img.style.animation = "none";
+  void img.offsetWidth; // trigger reflow
+  img.style.animation = "popout 0.8s forwards";
 });
 
 // FIREWORKS
